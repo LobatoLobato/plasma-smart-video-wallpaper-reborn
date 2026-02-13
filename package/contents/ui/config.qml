@@ -69,7 +69,10 @@ ColumnLayout {
     property real cfg_PlaybackRate
     property real cfg_AlternativePlaybackRate
     property alias cfg_Volume: volumeSlider.value
-    property alias cfg_DayNightCycle: dayNightCycleCheckBox.checked
+    property bool cfg_DayNightCycleEnabled: dayNightCycleMode.currentValue !== Enum.DayNightCycleMode.Disabled
+    property alias cfg_DayNightCycleMode: dayNightCycleMode.currentValue
+    property alias cfg_DayNightCycleSunriseTime: dayNightCycleSunriseTime.value
+    property alias cfg_DayNightCycleSunsetTime: dayNightCycleSunsetTime.value
     property alias cfg_RandomMode: randomModeCheckbox.checked
     property alias cfg_ResumeLastVideo: resumeLastVideoCheckbox.checked
     property alias cfg_ChangeWallpaperTimerSeconds: wallpaperTimerSeconds.value
@@ -360,6 +363,52 @@ ColumnLayout {
                 }
             }
         }
+
+        RowLayout {
+            Kirigami.FormData.label: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Day-Night Cycle:")
+            visible: root.currentTab === 0
+
+            ComboBox {
+                id: dayNightCycleMode
+                model: [
+                    {
+                        text: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Disabled"),
+                        value: Enum.DayNightCycleMode.Disabled
+                    },
+                    {
+                        text: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Based on time"),
+                        value: Enum.DayNightCycleMode.Time
+                    },
+                    {
+                        text: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Based on Plasma Style"),
+                        value: Enum.DayNightCycleMode.PlasmaStyle
+                    },
+                    {
+                        text: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Always Day"),
+                        value: Enum.DayNightCycleMode.AlwaysDay
+                    },
+                    {
+                        text: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Always Night"),
+                        value: Enum.DayNightCycleMode.AlwaysNight
+                    }
+                ]
+                textRole: "text"
+                valueRole: "value"
+            }
+        }
+        ColumnLayout {
+            visible: root.currentTab === 0
+            enabled: dayNightCycleMode.currentValue === Enum.DayNightCycleMode.Time
+            Components.TimePicker {
+                id: dayNightCycleSunriseTime
+                label: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Sunrise:")
+            }
+            Components.TimePicker {
+                id: dayNightCycleSunsetTime
+                label: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Sunset: ")
+            }
+        }
+
         // RowLayout {
         ButtonGroup {
             id: backgroundGroup
@@ -519,12 +568,6 @@ ColumnLayout {
                     return Number.fromLocaleString(locale, reExtractNum.exec(text)[0]);
                 }
             }
-        }
-
-        CheckBox {
-            id: dayNightCycleCheckBox
-            Kirigami.FormData.label: i18n("Day/Night Cycle:")
-            visible: root.currentTab === 1
         }
 
         CheckBox {
