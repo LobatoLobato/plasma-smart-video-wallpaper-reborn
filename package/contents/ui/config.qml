@@ -23,6 +23,8 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtMultimedia
+import org.kde.config as KConfig
+import org.kde.kcmutils as KCM
 import org.kde.kirigami as Kirigami
 import org.kde.kquickcontrols 2.0 as KQuickControls
 import "code/enum.js" as Enum
@@ -84,6 +86,7 @@ ColumnLayout {
     property var isLockScreenSettings: null
     property int editingIndex: -1
     property var validDropExtensions: [".mp4", ".mpg", ".ogg", ".mov", ".webm", ".flv", ".mkv", ".avi", ".wmv", ".gif"]
+    property var dayNightPlugin: null
 
     property var muteModeModel: {
         // options for desktop and lock screen
@@ -227,6 +230,11 @@ ColumnLayout {
     Component.onCompleted: {
         videosModel.initModel(cfg_VideoUrls);
         getAudioDevicesModel();
+        try {
+            dayNightPlugin = Qt.createQmlObject("import com.github.luisbocanegra.svwr.nighttime 1.0; DayNight {}", root);
+        } catch (e) {
+            console.warn("QML Plugin com.github.luisbocanegra.svwr.nighttime not found, will use fixed times");
+        }
     }
 
     Kirigami.FormLayout {
@@ -364,7 +372,7 @@ ColumnLayout {
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Day-Night Cycle:")
+            Kirigami.FormData.label: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Day/Night Switch:")
             visible: root.currentTab === 0
 
             ComboBox {
@@ -375,7 +383,7 @@ ColumnLayout {
                         value: Enum.DayNightCycleMode.Disabled
                     },
                     {
-                        text: i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Based on time"),
+                        text: root.dayNightPlugin !== null ? i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Day-Night Cycle") : i18nd("plasma_wallpaper_luisbocanegra.smart.video.wallpaper.reborn", "Based on time"),
                         value: Enum.DayNightCycleMode.Time
                     },
                     {
@@ -394,9 +402,16 @@ ColumnLayout {
                 textRole: "text"
                 valueRole: "value"
             }
+            Button {
+                visible: root.cfg_DayNightCycleMode == Enum.DayNightCycleMode.Time && root.dayNightPlugin !== null
+                enabled: KConfig.KAuthorized.authorizeControlModule("kcm_nighttime")
+                text: i18nc("@action:button Configure day-night cycle times", "Configure…")
+                icon.name: "configure"
+                onClicked: KCM.KCMLauncher.open("kcm_nighttime")
+            }
         }
         ColumnLayout {
-            visible: root.currentTab === 0
+            visible: root.currentTab === 0 && root.dayNightPlugin === null && root.cfg_DayNightCycleMode == Enum.DayNightCycleMode.Time
             enabled: dayNightCycleMode.currentValue === Enum.DayNightCycleMode.Time
             Components.TimePicker {
                 id: dayNightCycleSunriseTime
